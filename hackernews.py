@@ -72,6 +72,7 @@ def saved(args):
         return stories
     elif args.export == 'xml':
         return pystache.render("""<?xml version="1.0" encoding="utf-8"?>
+            <title>Saved stories on Hacker News</title>
             <feed xmlns="http://www.w3.org/2005/Atom">
                 {{#stories}}
                 <entry>
