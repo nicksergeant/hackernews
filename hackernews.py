@@ -65,6 +65,7 @@ def saved(args):
 
     return ''
 
+
 # Parser
 parser = argparse.ArgumentParser(prog='Hacker News')
 parser.add_argument('--version', action='version', version='%(prog)s 0.1')
