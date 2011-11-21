@@ -60,7 +60,7 @@ def _login(**kwargs):
     return cookies
 
 def _reset_cookie():
-    cookie = open(COOKIE, 'rw')
+    cookie = open(COOKIE, 'r+')
     cookie.truncate(0)
     cookie.close()
 
@@ -87,6 +87,7 @@ def _get_saved_stories(**kwargs):
                                    cookies=cookies)
 
         if not _good_response(**kwargs):
+            kwargs.pop('r')
             return _get_saved_stories(**kwargs)
 
         kwargs['saved'] = []
