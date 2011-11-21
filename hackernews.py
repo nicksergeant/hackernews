@@ -1,17 +1,37 @@
 #!/usr/bin/env python
 
-import argparse, re, requests
+import argparse, os, pickle, re, requests
 from pyquery import PyQuery as pq
 import pystache
 
+BASE_PATH = os.path.dirname(__file__)
+COOKIE = os.path.join(BASE_PATH, 'hackernews.cookie')
 EXPORT_TYPES = ( 'json', 'xml', )
 
 
 def _login(**kwargs):
-    """Logs in to Hacker News and return the cookies."""
+    """Log in to Hacker News and return the cookies."""
 
     if 'r' not in kwargs:
         # We haven't established a login request.
+
+        # If we're using cookies, try to return those instead.
+        if not kwargs['args'].no_cookies:
+
+            # If the cookie doesn't exist, create it.
+            try:
+                cookie = open(COOKIE, 'r')
+            except IOError:
+                cookie = open(COOKIE, 'w')
+
+            # If there's something in the cookie, return that.
+            if os.stat(COOKIE).st_size:
+                cookies = pickle.load(cookie)
+                cookie.close()
+                return cookies
+            else:
+                cookie.close()
+
         # Request a blank login page to harvest the fnid (a CSRF-type key).
         r = requests.get('https://news.ycombinator.com/newslogin')
         J = pq(r.content)
@@ -25,11 +45,34 @@ def _login(**kwargs):
         }
         r = requests.post('https://news.ycombinator.com/y', data=payload)
 
-        return r.cookies
+        cookies = r.cookies
 
     else:
-        # Set the cookeis to the cached login request's cookies.
-        return kwargs['r'].cookies
+        # Set the cookies to the cached login request's cookies.
+        cookies = kwargs['r'].cookies
+
+    # Set the cookie
+    if not kwargs['args'].no_cookies:
+        cookie = open(COOKIE, 'w+')
+        pickle.dump(cookies, cookie)
+        cookie.close()
+
+    return cookies
+
+def _reset_cookie():
+    cookie = open(COOKIE, 'rw')
+    cookie.truncate(0)
+    cookie.close()
+
+def _good_response(**kwargs):
+
+    # Handle an invalid cookie / login.
+    if kwargs['r'].content == "Can't display that.":
+        _reset_cookie()
+        return False
+
+    return True
+
 
 def _get_saved_stories(**kwargs):
     """Returns a sorted list of the user's saved stories."""
@@ -42,6 +85,10 @@ def _get_saved_stories(**kwargs):
         # Make the saved items request and set an empty list.
         kwargs['r'] = requests.get('http://news.ycombinator.com/saved?id=%s' % kwargs['args'].username,
                                    cookies=cookies)
+
+        if not _good_response(**kwargs):
+            return _get_saved_stories(**kwargs)
+
         kwargs['saved'] = []
 
     # Grab the stories.
@@ -75,8 +122,11 @@ def _get_saved_stories(**kwargs):
             kwargs['r'] = requests.get('https://news.ycombinator.com%s' % last.attr('href'),
                                        cookies=cookies)
 
+            # Check to make sure we have a good response.
+            _good_response(**kwargs)
+
             # Call this function again, this time with the new list.
-            _get_saved_stories(**kwargs)
+            return _get_saved_stories(**kwargs)
 
     return kwargs['saved']
 
@@ -116,6 +166,8 @@ if __name__ == '__main__':
                               required=False, default='json', choices=EXPORT_TYPES)
     saved_parser.add_argument('--all', dest='all', help='Get all saved stories',
                               action='store_true')
+    saved_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't save cookies",
+                              action='store_true', default=False)
     saved_parser.set_defaults(func=saved)
 
     # Args
