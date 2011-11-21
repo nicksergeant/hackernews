@@ -7,37 +7,39 @@ import pystache
 EXPORT_TYPES = ( 'json', 'xml', )
 
 
-def _login(args):
+def _login(**kwargs):
     """Logs in to Hacker News and return the cookies."""
 
-    r = requests.get('https://news.ycombinator.com/newslogin')
-    J = pq(r.content)
+    if 'r' not in kwargs:
+        r = requests.get('https://news.ycombinator.com/newslogin')
+        J = pq(r.content)
 
-    fnid = J('input[name="fnid"]').val()
+        fnid = J('input[name="fnid"]').val()
 
-    payload = {
-        'fnid': fnid,
-        'u': args.username,
-        'p': args.password,
-    }
+        payload = {
+            'fnid': fnid,
+            'u': kwargs['args'].username,
+            'p': kwargs['args'].password,
+        }
 
-    r = requests.post('https://news.ycombinator.com/y', data=payload)
+        r = requests.post('https://news.ycombinator.com/y', data=payload)
+        cookies = r.cookies
 
-    return r.cookies
+    else:
+        cookies = kwargs['r'].cookies
 
-def _get_saved_stories(args, r=None, saved=None):
+    return cookies
+
+def _get_saved_stories(**kwargs):
     """Returns a sorted list of the user's saved stories."""
 
-    if r is None:
-        cookies = _login(args)
-        r = requests.get('http://news.ycombinator.com/saved?id=%s' % args.username,
-                         cookies=cookies)
-        saved = []
-    else:
-        cookies = r.cookies
+    cookies = _login(**kwargs)
+    r = requests.get('http://news.ycombinator.com/saved?id=%s' % kwargs['args'].username,
+                     cookies=cookies)
 
     J = pq(r.content)
     stories = J('table table td.title')
+    saved = []
 
     for story in stories:
         title = J(story).text()
@@ -53,19 +55,19 @@ def _get_saved_stories(args, r=None, saved=None):
                 'url': url,
             })
 
-    if args.all:
+    if kwargs['args'].all:
         last = J('a', J('table table tr td.title:last'))
         if last.text() == 'More':
             r = requests.get('https://news.ycombinator.com%s' % last.attr('href'),
                              cookies=cookies)
-            _get_saved_stories(args, r=r, saved=saved)
+            _get_saved_stories(args=args, r=r, saved=saved)
 
     return saved
 
 def saved(args):
     """Returns a formatted list of the logged-in user's saved stories."""
 
-    stories = _get_saved_stories(args)
+    stories = _get_saved_stories(args=args)
 
     if args.export == 'json':
         return stories
