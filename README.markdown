@@ -19,13 +19,13 @@ Using hackernews
 
 ### Saved items
 
-Retrieve a user's latest saved items:
+Retrieve a user's latest saved items, and print the output as JSON (default):
 
     hackernews.py saved -u 'username' -p 'password'
 
-Retrieve all saved items (this might take a while):
+Retrieve all saved items, and print the output as XML (this might take a while):
 
-    hackernews.py saved -all -u 'username' -p 'password'
+    hackernews.py saved -all -e xml -u 'username' -p 'password'
 
 Help for the `saved` subcommand:
 

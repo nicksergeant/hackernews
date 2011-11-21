@@ -3,9 +3,11 @@
 import argparse, re, requests
 from pyquery import PyQuery as pq
 
+EXPORT_TYPES = ( 'json', 'xml',)
+
 
 def _login(args):
-    """Log in to Hacker News and return the cookies."""
+    """Logs in to Hacker News and return the cookies."""
 
     r = requests.get('https://news.ycombinator.com/newslogin')
     J = pq(r.content)
@@ -61,9 +63,20 @@ def saved(args):
     """Returns a formatted list of the logged-in user's saved stories."""
 
     stories = _get_saved_stories(args)
-    print stories
 
-    return ''
+    if args.export == 'json':
+        print stories
+    elif args.export == 'xml':
+        xml = '<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">'
+        for story in stories:
+            entry = '\n    <entry>'
+            entry = entry + '\n        <title>%s</title>\n        <link href="%s" />' % (story['title'], story['url'])
+            entry = entry + '\n    </entry>'
+            xml = xml + entry
+        xml = xml + '\n</feed>'
+        print xml
+
+    return stories
 
 
 # Parser
@@ -75,6 +88,7 @@ subparsers = parser.add_subparsers()
 saved_parser = subparsers.add_parser('saved')
 saved_parser.add_argument('-u', '--username', dest='username', help='HN Username', required=True)
 saved_parser.add_argument('-p', '--password', dest='password', help='HN Password', required=True)
+saved_parser.add_argument('-e', '--export', dest='export', help='Export type', required=False, default='json', choices=EXPORT_TYPES)
 saved_parser.add_argument('--all', dest='all', help='Get all saved stories', action='store_true')
 saved_parser.set_defaults(func=saved)
 
