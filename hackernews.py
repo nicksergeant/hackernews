@@ -65,7 +65,7 @@ def saved(args):
     stories = _get_saved_stories(args)
 
     if args.export == 'json':
-        print stories
+        return stories
     elif args.export == 'xml':
         xml = '<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">'
         for story in stories:
@@ -76,10 +76,7 @@ def saved(args):
     </entry>""" % (story['title'], story['url'])
             xml = xml + entry
         xml = xml + '\n</feed>'
-        print xml
-
-    return stories
-
+        return xml
 
 if __name__ == '__main__':
     # Parser
@@ -97,4 +94,4 @@ if __name__ == '__main__':
 
     # Args
     args = parser.parse_args()
-    args.func(args)
+    print args.func(args)
