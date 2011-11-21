@@ -4,7 +4,7 @@ import argparse, re, requests
 from pyquery import PyQuery as pq
 import pystache
 
-EXPORT_TYPES = ( 'json', 'xml',)
+EXPORT_TYPES = ( 'json', 'xml', )
 
 
 def _login(args):
