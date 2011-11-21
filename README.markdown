@@ -15,8 +15,6 @@ Using hackernews
 
 ### Help
 
-Help for the hackernews CLI.
-
     hackernews.py -h
 
 ### Saved items
@@ -25,7 +23,7 @@ Retrieve a user's latest saved items:
 
     hackernews.py saved -u 'username' -p 'password'
 
-Retrieve all saved items (this might take a while).
+Retrieve all saved items (this might take a while):
 
     hackernews.py saved -all -u 'username' -p 'password'
 
