@@ -2,6 +2,8 @@
 
 import argparse, re, requests
 from pyquery import PyQuery as pq
+from xml.dom.minidom import Text, Element
+import pystache
 
 EXPORT_TYPES = ( 'json', 'xml',)
 
@@ -29,7 +31,8 @@ def _get_saved_stories(args, r=None, saved=None):
 
     if r is None:
         cookies = _login(args)
-        r = requests.get('http://news.ycombinator.com/saved?id=%s' % args.username, cookies=cookies)
+        r = requests.get('http://news.ycombinator.com/saved?id=%s' % args.username,
+                         cookies=cookies)
         saved = []
     else:
         cookies = r.cookies
@@ -54,7 +57,8 @@ def _get_saved_stories(args, r=None, saved=None):
     if args.all:
         last = J('a', J('table table tr td.title:last'))
         if last.text() == 'More':
-            r = requests.get('https://news.ycombinator.com%s' % last.attr('href'), cookies=cookies)
+            r = requests.get('https://news.ycombinator.com%s' % last.attr('href'),
+                             cookies=cookies)
             _get_saved_stories(args, r=r, saved=saved)
 
     return saved
@@ -67,18 +71,19 @@ def saved(args):
     if args.export == 'json':
         return stories
     elif args.export == 'xml':
-        xml = '<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">'
-        for story in stories:
-            entry = """
-    <entry>
-        <title>%s</title>
-        <link href="%s" />
-    </entry>""" % (story['title'], story['url'])
-            xml = xml + entry
-        xml = xml + '\n</feed>'
-        return xml
+        return pystache.render("""
+            <?xml version="1.0" encoding="utf-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+                {{#stories}}
+                <entry>
+                    <title>{{title}}</title>
+                    <link href="{{url}}" />
+                </entry>
+                {{/stories}}
+            </feed>""", {'stories': stories})
 
 if __name__ == '__main__':
+
     # Parser
     parser = argparse.ArgumentParser(prog='Hacker News')
     parser.add_argument('--version', action='version', version='%(prog)s 0.1')
@@ -86,10 +91,14 @@ if __name__ == '__main__':
 
     # Subparsers
     saved_parser = subparsers.add_parser('saved')
-    saved_parser.add_argument('-u', '--username', dest='username', help='HN Username', required=True)
-    saved_parser.add_argument('-p', '--password', dest='password', help='HN Password', required=True)
-    saved_parser.add_argument('-e', '--export', dest='export', help='Export type', required=False, default='json', choices=EXPORT_TYPES)
-    saved_parser.add_argument('--all', dest='all', help='Get all saved stories', action='store_true')
+    saved_parser.add_argument('-u', '--username', dest='username', help='HN Username',
+                              required=True)
+    saved_parser.add_argument('-p', '--password', dest='password', help='HN Password',
+                              required=True)
+    saved_parser.add_argument('-e', '--export', dest='export', help='Export type',
+                              required=False, default='json', choices=EXPORT_TYPES)
+    saved_parser.add_argument('--all', dest='all', help='Get all saved stories',
+                              action='store_true')
     saved_parser.set_defaults(func=saved)
 
     # Args
