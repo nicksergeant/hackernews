@@ -74,7 +74,7 @@ subparsers = parser.add_subparsers()
 saved_parser = subparsers.add_parser('saved')
 saved_parser.add_argument('-u', '--username', dest='username', help='HN Username', required=True)
 saved_parser.add_argument('-p', '--password', dest='password', help='HN Password', required=True)
-saved_parser.add_argument('--all', dest='all', help='Get all saved stories?', action='store_true')
+saved_parser.add_argument('--all', dest='all', help='Get all saved stories', action='store_true')
 saved_parser.set_defaults(func=saved)
 
 # Args
