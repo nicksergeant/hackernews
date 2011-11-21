@@ -81,19 +81,20 @@ def saved(args):
     return stories
 
 
-# Parser
-parser = argparse.ArgumentParser(prog='Hacker News')
-parser.add_argument('--version', action='version', version='%(prog)s 0.1')
-subparsers = parser.add_subparsers()
+if __name__ == '__main__':
+    # Parser
+    parser = argparse.ArgumentParser(prog='Hacker News')
+    parser.add_argument('--version', action='version', version='%(prog)s 0.1')
+    subparsers = parser.add_subparsers()
 
-# Subparsers
-saved_parser = subparsers.add_parser('saved')
-saved_parser.add_argument('-u', '--username', dest='username', help='HN Username', required=True)
-saved_parser.add_argument('-p', '--password', dest='password', help='HN Password', required=True)
-saved_parser.add_argument('-e', '--export', dest='export', help='Export type', required=False, default='json', choices=EXPORT_TYPES)
-saved_parser.add_argument('--all', dest='all', help='Get all saved stories', action='store_true')
-saved_parser.set_defaults(func=saved)
+    # Subparsers
+    saved_parser = subparsers.add_parser('saved')
+    saved_parser.add_argument('-u', '--username', dest='username', help='HN Username', required=True)
+    saved_parser.add_argument('-p', '--password', dest='password', help='HN Password', required=True)
+    saved_parser.add_argument('-e', '--export', dest='export', help='Export type', required=False, default='json', choices=EXPORT_TYPES)
+    saved_parser.add_argument('--all', dest='all', help='Get all saved stories', action='store_true')
+    saved_parser.set_defaults(func=saved)
 
-# Args
-args = parser.parse_args()
-args.func(args)
+    # Args
+    args = parser.parse_args()
+    args.func(args)
