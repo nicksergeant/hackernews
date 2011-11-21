@@ -69,9 +69,11 @@ def saved(args):
     elif args.export == 'xml':
         xml = '<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">'
         for story in stories:
-            entry = '\n    <entry>'
-            entry = entry + '\n        <title>%s</title>\n        <link href="%s" />' % (story['title'], story['url'])
-            entry = entry + '\n    </entry>'
+            entry = """
+    <entry>
+        <title>%s</title>
+        <link href="%s" />
+    </entry>""" % (story['title'], story['url'])
             xml = xml + entry
         xml = xml + '\n</feed>'
         print xml
