@@ -2,7 +2,6 @@
 
 import argparse, re, requests
 from pyquery import PyQuery as pq
-from xml.dom.minidom import Text, Element
 import pystache
 
 EXPORT_TYPES = ( 'json', 'xml',)
