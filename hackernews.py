@@ -71,8 +71,7 @@ def saved(args):
     if args.export == 'json':
         return stories
     elif args.export == 'xml':
-        return pystache.render("""
-            <?xml version="1.0" encoding="utf-8"?>
+        return pystache.render("""<?xml version="1.0" encoding="utf-8"?>
             <feed xmlns="http://www.w3.org/2005/Atom">
                 {{#stories}}
                 <entry>
