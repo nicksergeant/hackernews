@@ -10,6 +10,10 @@ Requirements
 * [pystache](https://github.com/defunkt/pystache)
 * [pyquery](http://packages.python.org/pyquery/)
 
+Requirements can be installed directly by using
+
+    pip install -r requirements.txt
+
 Using hackernews
 ----------------
 
