@@ -11,58 +11,74 @@ def _login(**kwargs):
     """Logs in to Hacker News and return the cookies."""
 
     if 'r' not in kwargs:
+        # We haven't established a login request.
+        # Request a blank login page to harvest the fnid (a CSRF-type key).
         r = requests.get('https://news.ycombinator.com/newslogin')
         J = pq(r.content)
-
         fnid = J('input[name="fnid"]').val()
 
+        # Build the login POST data and make the login request.
         payload = {
             'fnid': fnid,
             'u': kwargs['args'].username,
             'p': kwargs['args'].password,
         }
-
         r = requests.post('https://news.ycombinator.com/y', data=payload)
-        cookies = r.cookies
+
+        return r.cookies
 
     else:
-        cookies = kwargs['r'].cookies
-
-    return cookies
+        # Set the cookeis to the cached login request's cookies.
+        return kwargs['r'].cookies
 
 def _get_saved_stories(**kwargs):
     """Returns a sorted list of the user's saved stories."""
 
+    # Log in to get cookies.
     cookies = _login(**kwargs)
-    r = requests.get('http://news.ycombinator.com/saved?id=%s' % kwargs['args'].username,
-                     cookies=cookies)
 
-    J = pq(r.content)
+    if 'r' not in kwargs:
+        # This is the first saved items request.
+        # Make the saved items request and set an empty list.
+        kwargs['r'] = requests.get('http://news.ycombinator.com/saved?id=%s' % kwargs['args'].username,
+                                   cookies=cookies)
+        kwargs['saved'] = []
+
+    # Grab the stories.
+    J = pq(kwargs['r'].content)
     stories = J('table table td.title')
-    saved = []
 
     for story in stories:
         title = J(story).text()
+
+        # Skip digit-only <td>s and the 'More' link.
         if not re.match('\d+\.|More', title):
 
             url = J('a', story).attr('href')
 
+            # For HN links, make absolute URL.
             if not url.startswith('http'):
                 url = 'https://news.ycombinator.com/' + url
 
-            saved.append({
+            # Add the story to the saved list.
+            kwargs['saved'].append({
                 'title': title,
                 'url': url,
             })
 
+    # If we're getting all saved stories.
     if kwargs['args'].all:
+
+        # Find the 'More' link and load it.
         last = J('a', J('table table tr td.title:last'))
         if last.text() == 'More':
-            r = requests.get('https://news.ycombinator.com%s' % last.attr('href'),
-                             cookies=cookies)
-            _get_saved_stories(args=args, r=r, saved=saved)
+            kwargs['r'] = requests.get('https://news.ycombinator.com%s' % last.attr('href'),
+                                       cookies=cookies)
 
-    return saved
+            # Call this function again, this time with the new list.
+            _get_saved_stories(**kwargs)
+
+    return kwargs['saved']
 
 def saved(args):
     """Returns a formatted list of the logged-in user's saved stories."""
