@@ -27,7 +27,7 @@ By default, `hackernews` uses a built-in cookie system. It saves the file `hacke
 
     hackernews.py <command> --no-cookies
 
-When cookies are turned off, two additional requests are needed to retrieve proper login info.
+When cookies are turned off, two additional requests are needed per-command to retrieve proper login info.
 
 ### Saved items
 
