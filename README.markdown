@@ -21,6 +21,14 @@ Using hackernews
 
     hackernews.py -h
 
+### Cookies
+
+By default, `hackernews` uses a built-in cookie system. It saves the file `hackernews.cookie` to the base directory. To disable the use of cookies:
+
+    hackernews.py <command> --no-cookies
+
+When cookies are turned off, two additional requests are needed to retrieve proper login info.
+
 ### Saved items
 
 Retrieve a user's latest saved items, and print the output as JSON (default):
@@ -34,11 +42,3 @@ Retrieve all saved items, and print the output as XML (this might take a while):
 Help for the `saved` subcommand:
 
     hackernews.py saved -h
-
-### Cookies
-
-By default, `hackernews` uses a built-in cookie system. It saves the file `hackernews.cookie` to the base directory. To disable the use of cookies:
-
-    hackernews.py <command> --no-cookies
-
-When cookies are turned off, two additional requests are needed to retrieve proper login info.
