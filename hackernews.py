@@ -48,7 +48,7 @@ def _login(**kwargs):
         r = requests.post('https://news.ycombinator.com/y', data=payload)
 
         if 'set-cookie' not in r.headers:
-            raise BaseException('It looks like you might an incorrect username/password (got a bad response when logging you in).')
+            raise BaseException('It looks like you might have an incorrect username/password (got a bad response when logging you in).')
 
         cookies = r.cookies
 
