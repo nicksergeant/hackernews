@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
-import argparse, os, pickle, re, requests
+import argparse, os, pickle, re, requests, sys
 from pyquery import PyQuery as pq
 import pystache
 
 BASE_PATH = os.path.dirname(__file__)
 COOKIE = os.path.join(BASE_PATH, 'hackernews.cookie')
 EXPORT_TYPES = ( 'json', 'xml', )
+
+tries = 0
 
 
 def _login(**kwargs):
@@ -45,6 +47,9 @@ def _login(**kwargs):
         }
         r = requests.post('https://news.ycombinator.com/y', data=payload)
 
+        if 'set-cookie' not in r.headers:
+            raise BaseException('It looks like you might an incorrect username/password (got a bad response when logging you in).')
+
         cookies = r.cookies
 
     else:
@@ -60,9 +65,15 @@ def _login(**kwargs):
     return cookies
 
 def _reset_cookie():
-    cookie = open(COOKIE, 'r+')
-    cookie.truncate(0)
-    cookie.close()
+
+    if tries < 5:
+        cookie = open(COOKIE, 'r+')
+        cookie.truncate(0)
+        cookie.close()
+    else:
+        raise BaseException('Too many tries with bad responses (Hacker News may be down).')
+
+    tries = tries + 1
 
 def _good_response(**kwargs):
 
@@ -86,6 +97,7 @@ def _get_saved_stories(**kwargs):
         kwargs['r'] = requests.get('http://news.ycombinator.com/saved?id=%s' % kwargs['args'].username,
                                    cookies=cookies)
 
+        # Check to make sure we have a good response.
         if not _good_response(**kwargs):
             kwargs.pop('r')
             return _get_saved_stories(**kwargs)
@@ -124,7 +136,9 @@ def _get_saved_stories(**kwargs):
                                        cookies=cookies)
 
             # Check to make sure we have a good response.
-            _good_response(**kwargs)
+            if not _good_response(**kwargs):
+                kwargs.pop('r')
+                return _get_saved_stories(**kwargs)
 
             # Call this function again, this time with the new list.
             return _get_saved_stories(**kwargs)
