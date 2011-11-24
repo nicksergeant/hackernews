@@ -66,6 +66,8 @@ def _login(**kwargs):
 
 def _reset_cookie():
 
+    # Reset the cookie and mark this as a try.
+    # If we try 5 times, kill the script.
     if tries < 5:
         cookie = open(COOKIE, 'r+')
         cookie.truncate(0)
