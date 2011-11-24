@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import argparse, os, pickle, re, requests, sys
+import argparse, os, pickle, re, requests
 from pyquery import PyQuery as pq
 import pystache
 
