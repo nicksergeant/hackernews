@@ -70,10 +70,9 @@ def _reset_cookie():
         cookie = open(COOKIE, 'r+')
         cookie.truncate(0)
         cookie.close()
+        tries = tries + 1
     else:
         raise BaseException('Too many tries with bad responses (Hacker News may be down).')
-
-    tries = tries + 1
 
 def _good_response(**kwargs):
 
