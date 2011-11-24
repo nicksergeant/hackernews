@@ -86,6 +86,54 @@ def _good_response(**kwargs):
     return True
 
 
+def _get_comments(**kwargs):
+    """Returns a sorted list of the user's comments."""
+
+    # Log in to get cookies.
+    cookies = _login(**kwargs)
+
+    if 'r' not in kwargs:
+        # This is the first comments request.
+        # Make the comments request and set an empty list.
+        kwargs['r'] = requests.get('http://news.ycombinator.com/threads?id=%s' % kwargs['args'].username,
+                                   cookies=cookies)
+
+        # Check to make sure we have a good response.
+        if not _good_response(**kwargs):
+            kwargs.pop('r')
+            return _get_comments(**kwargs)
+
+        kwargs['comments'] = []
+
+    # Grab the comments.
+    J = pq(kwargs['r'].content)
+    comments = J('table table td.default')
+
+    for c in comments:
+        user = J('span.comhead a:eq(0)', c).text()
+        points = J('span.comhead span', c).text()
+        comment = J('span.comment', c).html()
+
+        # TODO: Clean up comment HTML.
+        # TODO: Harvest link, parent, story, date
+
+        if points != None:
+            points = re.sub('points?', '', points).strip()
+        else:
+            points = 'N/A'
+
+        # Add the comment to the saved list.
+        kwargs['comments'].append({
+            'user': user,
+            'comment': comment,
+            'points': points,
+        })
+
+        # Debug
+        #print '%s: %s\nPoints: %s\n\n=================\n' % (user, comment, points)
+
+    return kwargs['comments']
+
 def _get_saved_stories(**kwargs):
     """Returns a sorted list of the user's saved stories."""
 
@@ -146,6 +194,7 @@ def _get_saved_stories(**kwargs):
 
     return kwargs['saved']
 
+
 def saved(args):
     """Returns a formatted list of the logged-in user's saved stories."""
 
@@ -165,6 +214,27 @@ def saved(args):
                 {{/stories}}
             </feed>""", {'stories': stories})
 
+def comments(args):
+    """Returns a formatted list of the logged-in user's comments."""
+
+    comments = _get_comments(args=args)
+
+    if args.export == 'json':
+        return comments
+    elif args.export == 'xml':
+        return pystache.render("""<?xml version="1.0" encoding="utf-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+                <title>Comments on Hacker News</title>
+                {{#comments}}
+                <entry>
+                    <title>{{comment}}</title>
+                    <user>{{user}}</user>
+                    <points>{{points}}</points>
+                </entry>
+                {{/comments}}
+            </feed>""", {'comments': comments})
+
+
 if __name__ == '__main__':
 
     # Parser
@@ -172,7 +242,10 @@ if __name__ == '__main__':
     parser.add_argument('--version', action='version', version='%(prog)s 0.1')
     subparsers = parser.add_subparsers()
 
-    # Subparsers
+    # TODO: --username, --password, --all, --no-cookies should probably be stored
+    # at the parser level, not subparser.
+
+    # Saved stories
     saved_parser = subparsers.add_parser('saved')
     saved_parser.add_argument('-u', '--username', dest='username', help='HN Username',
                               required=True)
@@ -185,6 +258,20 @@ if __name__ == '__main__':
     saved_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't save cookies",
                               action='store_true', default=False)
     saved_parser.set_defaults(func=saved)
+
+    # Comments
+    comments_parser = subparsers.add_parser('comments')
+    comments_parser.add_argument('-u', '--username', dest='username', help='HN Username',
+                              required=True)
+    comments_parser.add_argument('-p', '--password', dest='password', help='HN Password',
+                              required=True)
+    comments_parser.add_argument('-e', '--export', dest='export', help='Export type',
+                              required=False, default='json', choices=EXPORT_TYPES)
+    comments_parser.add_argument('--all', dest='all', help='Get all comments',
+                              action='store_true')
+    comments_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't save cookies",
+                              action='store_true', default=False)
+    comments_parser.set_defaults(func=comments)
 
     # Args
     args = parser.parse_args()
