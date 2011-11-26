@@ -2,6 +2,7 @@
 
 import argparse, os, pickle, re, requests
 from pyquery import PyQuery as pq
+from HTMLParser import HTMLParser
 import pystache
 
 BASE_PATH = os.path.dirname(__file__)
@@ -112,9 +113,11 @@ def _get_comments(**kwargs):
     for c in comments:
         user = J('span.comhead a:eq(0)', c).text()
         points = J('span.comhead span', c).text()
-        comment = J('span.comment', c).html()
 
-        # TODO: Clean up comment HTML.
+        comment = J('span.comment', c).html()
+        comment = re.sub('</p>', '\n\n', comment)     # Replace </p>s with newlines
+        comment = _strip_tags(comment).rstrip('\n\n') # Kill HTML
+
         # TODO: Harvest link, parent, story, date
 
         if points != None:
@@ -233,6 +236,21 @@ def comments(args):
                 </entry>
                 {{/comments}}
             </feed>""", {'comments': comments})
+
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+def _strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
 
 
 if __name__ == '__main__':
