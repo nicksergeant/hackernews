@@ -285,8 +285,8 @@ if __name__ == '__main__':
                               required=True)
     comments_parser.add_argument('-e', '--export', dest='export', help='Export type',
                               required=False, default='json', choices=EXPORT_TYPES)
-    comments_parser.add_argument('--all', dest='all', help='Get all comments',
-                              action='store_true')
+    #comments_parser.add_argument('--all', dest='all', help='Get all comments',
+                              #action='store_true')
     comments_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't save cookies",
                               action='store_true', default=False)
     comments_parser.set_defaults(func=comments)

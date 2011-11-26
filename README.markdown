@@ -49,10 +49,6 @@ Retrieve a user's comment threads, and print the output as JSON (default):
 
     hackernews.py comments -u 'username' -p 'password'
 
-Retrieve all comment threads, and print the output as XML (this might take a while):
-
-    hackernews.py comments -all -e xml -u 'username' -p 'password'
-
 Help for the `comments` subcommand:
 
     hackernews.py comments -h
