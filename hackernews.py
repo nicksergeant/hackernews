@@ -289,7 +289,7 @@ def comments(args):
                 {{#comments}}
                 <entry>
                     <title>{{comment}}</title>
-                    <user>{{user}}</user>
+                    <author>{{user}}</author>
                     <reply>{{reply}}</reply>
                     <points>{{points}}</points>
                     <link href="{{link}}" />
