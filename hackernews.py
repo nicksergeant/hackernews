@@ -292,7 +292,7 @@ def comments(args):
                     <user>{{user}}</user>
                     <reply>{{reply}}</reply>
                     <points>{{points}}</points>
-                    <link>{{link}}</link>
+                    <link href="{{link}}" />
                     <parent>{{parent}}</parent>
                     <story>{{story}}</story>
                     <date>{{date}}</date>
