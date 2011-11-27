@@ -221,6 +221,9 @@ def _get_comments(**kwargs):
 
         comment = _sanitize_comment(J, c)
 
+        if kwargs['args'].no_owner and comment['user'] == kwargs['args'].username:
+            continue
+
         # Add the comment to the saved list.
         kwargs['comments'].append({
             'user': comment['user'],
@@ -333,6 +336,8 @@ if __name__ == '__main__':
     comments_parser.add_argument('--all', dest='all', help='Get all comments',
                               action='store_true')
     comments_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't use cookies",
+                              action='store_true', default=False)
+    comments_parser.add_argument('--no-owner', dest='no_owner', help="Don't show owner's comments",
                               action='store_true', default=False)
     comments_parser.set_defaults(func=comments)
 
