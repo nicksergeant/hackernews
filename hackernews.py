@@ -2,7 +2,6 @@
 
 import argparse, os, pickle, re, requests
 from pyquery import PyQuery as pq
-from HTMLParser import HTMLParser
 import pystache
 
 BASE_PATH = os.path.dirname(__file__)
