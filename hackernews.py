@@ -86,56 +86,54 @@ def _good_response(**kwargs):
 
     return True
 
+def _sanitize_comment(J, c):
+    user = J('span.comhead a:eq(0)', c).text()
+    link = 'https://news.ycombinator.com/%s' % J('span.comhead a:eq(1)', c).attr('href')
+    points = J('span.comhead span', c).text()
 
-def _get_comments(**kwargs):
-    """Returns a sorted list of the user's comments."""
+    # 'Parent' and 'Story' don't exist for non-owned comments.
+    parent = J('span.comhead a:eq(2)', c).attr('href')
+    if parent is None:
+        parent = 'N/A'
+        story  = 'N/A'
+    else:
+        parent = 'https://news.ycombinator.com/%s' % parent
+        story  = 'https://news.ycombinator.com/%s' % J('span.comhead a:eq(3)', c).attr('href')
 
-    # Log in to get cookies.
-    cookies = _login(**kwargs)
+    # Reply link doesn't always exist, for some reason.
+    reply = J('u a', c).attr('href')
+    if reply is None:
+        reply = 'N/A'
+    else:
+        reply = 'https://news.ycombinator.com/%s' % J('u a', c).attr('href')
 
-    if 'r' not in kwargs:
-        # This is the first comments request.
-        # Make the comments request and set an empty list.
-        kwargs['r'] = requests.get('http://news.ycombinator.com/threads?id=%s' % kwargs['args'].username,
-                                   cookies=cookies)
+    # Sanitize the comment.
+    comment = J('span.comment', c).html()
+    comment = re.sub('</p>', '\n\n', comment)
+    comment = re.sub('<[^<]+?>', '', comment).rstrip('\n\n')
 
-        # Check to make sure we have a good response.
-        if not _good_response(**kwargs):
-            kwargs.pop('r')
-            return _get_comments(**kwargs)
+    # Grab the points, if possible.
+    if points != None:
+        points = re.sub('points?', '', points).strip()
+    else:
+        points = 'N/A'
 
-        kwargs['comments'] = []
+    # Strip the comhead and harvest the date.
+    J('span.comhead a, span.comhead span', c).remove()
+    date = J('span.comhead', c).text()
+    date = re.sub('on:|by|\||', '', date).strip()
 
-    # Grab the comments.
-    J = pq(kwargs['r'].content)
-    comments = J('table table td.default')
+    return {
+        'user': user,
+        'comment': comment,
+        'reply': reply,
+        'points': points,
+        'link': link,
+        'parent': parent,
+        'story': story,
+        'date': date,
+    }
 
-    for c in comments:
-        user = J('span.comhead a:eq(0)', c).text()
-        points = J('span.comhead span', c).text()
-
-        comment = J('span.comment', c).html()
-        comment = re.sub('</p>', '\n\n', comment)     # Replace </p>s with newlines
-        comment = _strip_tags(comment).rstrip('\n\n') # Kill HTML
-
-        # TODO: Harvest link, parent, story, date
-
-        if points != None:
-            points = re.sub('points?', '', points).strip()
-        else:
-            points = 'N/A'
-
-        # Add the comment to the saved list.
-        kwargs['comments'].append({
-            'user': user,
-            'comment': comment,
-            'points': points,
-        })
-
-        # Debug
-        #print '%s: %s\nPoints: %s\n\n=================\n' % (user, comment, points)
-
-    return kwargs['comments']
 
 def _get_saved_stories(**kwargs):
     """Returns a sorted list of the user's saved stories."""
@@ -146,7 +144,7 @@ def _get_saved_stories(**kwargs):
     if 'r' not in kwargs:
         # This is the first saved items request.
         # Make the saved items request and set an empty list.
-        kwargs['r'] = requests.get('http://news.ycombinator.com/saved?id=%s' % kwargs['args'].username,
+        kwargs['r'] = requests.get('https://news.ycombinator.com/saved?id=%s' % kwargs['args'].username,
                                    cookies=cookies)
 
         # Check to make sure we have a good response.
@@ -197,6 +195,47 @@ def _get_saved_stories(**kwargs):
 
     return kwargs['saved']
 
+def _get_comments(**kwargs):
+    """Returns a sorted list of the user's comments."""
+
+    # Log in to get cookies.
+    cookies = _login(**kwargs)
+
+    if 'r' not in kwargs:
+        # This is the first comments request.
+        # Make the comments request and set an empty list.
+        kwargs['r'] = requests.get('https://news.ycombinator.com/threads?id=%s' % kwargs['args'].username,
+                                   cookies=cookies)
+
+        # Check to make sure we have a good response.
+        if not _good_response(**kwargs):
+            kwargs.pop('r')
+            return _get_comments(**kwargs)
+
+        kwargs['comments'] = []
+
+    # Grab the comments.
+    J = pq(kwargs['r'].content)
+    comments = J('table table td.default')
+
+    for c in comments:
+
+        comment = _sanitize_comment(J, c)
+
+        # Add the comment to the saved list.
+        kwargs['comments'].append({
+            'user': comment['user'],
+            'comment': comment['comment'],
+            'reply': comment['reply'],
+            'points': comment['points'],
+            'link': comment['link'],
+            'parent': comment['parent'],
+            'story': comment['story'],
+            'date': comment['date'],
+        })
+
+    return kwargs['comments']
+
 
 def saved(args):
     """Returns a formatted list of the logged-in user's saved stories."""
@@ -232,25 +271,15 @@ def comments(args):
                 <entry>
                     <title>{{comment}}</title>
                     <user>{{user}}</user>
+                    <reply>{{reply}}</reply>
                     <points>{{points}}</points>
+                    <link>{{link}}</link>
+                    <parent>{{parent}}</parent>
+                    <story>{{story}}</story>
+                    <date>{{date}}</date>
                 </entry>
                 {{/comments}}
             </feed>""", {'comments': comments})
-
-
-class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
-
-def _strip_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()
 
 
 if __name__ == '__main__':
@@ -273,7 +302,7 @@ if __name__ == '__main__':
                               required=False, default='json', choices=EXPORT_TYPES)
     saved_parser.add_argument('--all', dest='all', help='Get all saved stories',
                               action='store_true')
-    saved_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't save cookies",
+    saved_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't use cookies",
                               action='store_true', default=False)
     saved_parser.set_defaults(func=saved)
 
@@ -287,7 +316,7 @@ if __name__ == '__main__':
                               required=False, default='json', choices=EXPORT_TYPES)
     #comments_parser.add_argument('--all', dest='all', help='Get all comments',
                               #action='store_true')
-    comments_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't save cookies",
+    comments_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't use cookies",
                               action='store_true', default=False)
     comments_parser.set_defaults(func=comments)
 
