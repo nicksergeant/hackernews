@@ -53,6 +53,10 @@ Retrieve all comments, and print the output as XML (this might take a while):
 
     hackernews.py comments -all -e xml -u 'username' -p 'password'
 
+Don't show owner's comments (the logged-in user); this is useful for a feed of replies to your comments):
+
+    hackernews.py comments --no-owner -u 'username' -p 'password'
+
 Help for the `comments` subcommand:
 
     hackernews.py comments -h
