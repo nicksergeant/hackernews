@@ -234,6 +234,23 @@ def _get_comments(**kwargs):
             'date': comment['date'],
         })
 
+    # If we're getting all comments.
+    if kwargs['args'].all:
+
+        # Find the 'More' link and load it.
+        last = J('a', J('table table tr td.title:last'))
+        if last.text() == 'More':
+            kwargs['r'] = requests.get('https://news.ycombinator.com%s' % last.attr('href'),
+                                       cookies=cookies)
+
+            # Check to make sure we have a good response.
+            if not _good_response(**kwargs):
+                kwargs.pop('r')
+                return _get_comments(**kwargs)
+
+            # Call this function again, this time with the new list.
+            return _get_comments(**kwargs)
+
     return kwargs['comments']
 
 
@@ -314,8 +331,8 @@ if __name__ == '__main__':
                               required=True)
     comments_parser.add_argument('-e', '--export', dest='export', help='Export type',
                               required=False, default='json', choices=EXPORT_TYPES)
-    #comments_parser.add_argument('--all', dest='all', help='Get all comments',
-                              #action='store_true')
+    comments_parser.add_argument('--all', dest='all', help='Get all comments',
+                              action='store_true')
     comments_parser.add_argument('--no-cookies', dest='no_cookies', help="Don't use cookies",
                               action='store_true', default=False)
     comments_parser.set_defaults(func=comments)
