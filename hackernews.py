@@ -160,8 +160,9 @@ def _get_saved_stories(**kwargs):
     for story in stories:
         title = J(story).text()
         url = J('a', story).attr('href')
+
         # Skip digit-only <td>s and the 'More' link.        
-        if not re.match('\d+', title) and not re.match('\/x\?', url):            
+        if not re.match('\d+|\/x\?', title):
 
             # For HN links, make absolute URL.
             if not url.startswith('http'):
