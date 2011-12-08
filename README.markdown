@@ -37,7 +37,7 @@ Retrieve a user's latest saved items, and print the output as JSON (default):
 
 Retrieve all saved items, and print the output as XML (this might take a while):
 
-    hackernews.py saved -all -e xml -u 'username' -p 'password'
+    hackernews.py saved --all -e xml -u 'username' -p 'password'
 
 Help for the `saved` subcommand:
 
@@ -51,7 +51,7 @@ Retrieve a user's comment threads, and print the output as JSON (default):
 
 Retrieve all comments, and print the output as XML (this might take a while):
 
-    hackernews.py comments -all -e xml -u 'username' -p 'password'
+    hackernews.py comments --all -e xml -u 'username' -p 'password'
 
 Don't show owner's comments (the logged-in user); this is useful for a feed of replies to your comments:
 
