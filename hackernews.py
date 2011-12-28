@@ -64,7 +64,7 @@ def _login(**kwargs):
 
     return cookies
 
-def _reset_cookie():
+def _reset_cookie(tries):
 
     # Reset the cookie and mark this as a try.
     # If we try 5 times, kill the script.
@@ -80,7 +80,7 @@ def _good_response(**kwargs):
 
     # Handle an invalid cookie / login.
     if kwargs['r'].content == "Can't display that.":
-        _reset_cookie()
+        _reset_cookie(tries)
         return False
 
     return True
@@ -164,15 +164,18 @@ def _get_saved_stories(**kwargs):
         # Skip digit-only <td>s and the 'More' link.        
         if not re.match('\d+|\/x\?', title):
 
-            # For HN links, make absolute URL.
-            if not url.startswith('http'):
-                url = 'https://news.ycombinator.com/' + url
+            # Skip HN dead links
+            if url is not None:
 
-            # Add the story to the saved list.
-            kwargs['saved'].append({
-                'title': title,
-                'url': url,
-            })
+                # For HN links, make absolute URL.
+                if not url.startswith('http'):
+                    url = 'https://news.ycombinator.com/' + url
+
+                # Add the story to the saved list.
+                kwargs['saved'].append({
+                    'title': title,
+                    'url': url,
+                })
 
     # If we're getting all saved stories.
     if kwargs['args'].all:
