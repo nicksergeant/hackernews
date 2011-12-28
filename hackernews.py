@@ -162,7 +162,7 @@ def _get_saved_stories(**kwargs):
         url = J('a', story).attr('href')
 
         # Skip digit-only <td>s and the 'More' link.        
-        if not re.match('\d+|More', title):
+        if not re.match('\d+\.$|More', title):
 
             # Skip HN dead links
             if url is not None:
